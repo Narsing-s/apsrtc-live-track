@@ -3,12 +3,15 @@
 A modern passenger-first web application for planning journeys across Andhra Pradesh and reaching official APSRTC services.
 
 ## Current capabilities
-- Responsive passenger dashboard and journey search interface.
-- Route discovery entry points and service information placeholders.
+- Responsive passenger dashboard and journey planner interface.
+- Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.
+- Map attribution to OpenStreetMap contributors; map markers are not represented as APSRTC depots or bus stops.
+- Official-source links for ticket booking and APSRTC live tracking.
 - Official APSRTC Live Track and ticket-booking links.
 - Explicit live GPS connection status; no simulated vehicles, fake ETAs, or fabricated schedules.
 - API status endpoint at `/api/live-status`.
 - PWA manifest and Vercel-ready Next.js setup.
+- GitHub Actions build validation on pushes and pull requests.
 
 ## Live GPS: authorization required
 APSRTC operates GPS-enabled bus tracking infrastructure, but this project does not assume that a public third-party API is available. Before showing vehicle positions:
