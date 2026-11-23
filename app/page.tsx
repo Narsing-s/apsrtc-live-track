@@ -28,7 +28,14 @@ export default function Home() {
   const [to, setTo] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [searched, setSearched] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);\n  const [mapChoice, setMapChoice] = useState<"from" | "to">("from");\n\n  function chooseMapCity(city: string) {\n    if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }\n    else { setTo(city); setMapChoice("from"); }\n    document.getElementById("journey")?.scrollIntoView({ behavior: "smooth" });\n  }
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mapChoice, setMapChoice] = useState<"from" | "to">("from");
+
+  function chooseMapCity(city: string) {
+    if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }
+    else { setTo(city); setMapChoice("from"); }
+    document.getElementById("journey")?.scrollIntoView({ behavior: "smooth" });
+  }
 
   function swapPlaces() {
     setFrom(to);
