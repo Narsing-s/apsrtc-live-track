@@ -1,0 +1,51 @@
+"use client";
+
+import { MapContainer, Marker, Popup, TileLayer, ZoomControl } from "react-leaflet";
+import L from "leaflet";
+
+export type CityHub = { name: string; lat: number; lng: number; note: string };
+
+export const CITY_HUBS: CityHub[] = [
+  { name: "Visakhapatnam", lat: 17.6868, lng: 83.2185, note: "North-coastal city reference point" },
+  { name: "Rajamahendravaram", lat: 17.0005, lng: 81.8040, note: "Godavari region reference point" },
+  { name: "Kakinada", lat: 16.9891, lng: 82.2475, note: "Coastal city reference point" },
+  { name: "Vijayawada", lat: 16.5062, lng: 80.6480, note: "Krishna region reference point" },
+  { name: "Guntur", lat: 16.3067, lng: 80.4365, note: "Guntur city reference point" },
+  { name: "Amaravati", lat: 16.5417, lng: 80.5150, note: "Capital region reference point" },
+  { name: "Ongole", lat: 15.5057, lng: 80.0499, note: "Prakasam region reference point" },
+  { name: "Nellore", lat: 14.4426, lng: 79.9865, note: "Nellore city reference point" },
+  { name: "Tirupati", lat: 13.6288, lng: 79.4192, note: "Tirupati city reference point" },
+  { name: "Kadapa", lat: 14.4673, lng: 78.8242, note: "Kadapa city reference point" },
+  { name: "Kurnool", lat: 15.8281, lng: 78.0373, note: "Rayalaseema city reference point" },
+  { name: "Anantapur", lat: 14.6819, lng: 77.6006, note: "Anantapur city reference point" }
+];
+
+const hubIcon = L.divIcon({
+  className: "apsrtc-map-marker",
+  html: '<span class="apsrtc-map-marker-core"></span>',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11]
+});
+
+export default function AndhraMap({ onChoose }: { onChoose: (city: string) => void }) {
+  return (
+    <MapContainer center={[16.2, 80.2]} zoom={6.3} minZoom={5} maxZoom={12} scrollWheelZoom={false} zoomControl={false} className="andhra-map">
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <ZoomControl position="bottomright" />
+      {CITY_HUBS.map((hub) => (
+        <Marker key={hub.name} position={[hub.lat, hub.lng]} icon={hubIcon}>
+          <Popup>
+            <div className="map-popup">
+              <strong>{hub.name}</strong>
+              <span>{hub.note}</span>
+              <button type="button" onClick={() => onChoose(hub.name)}>Use in journey search</button>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+}
