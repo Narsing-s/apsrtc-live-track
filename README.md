@@ -5,7 +5,7 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 ## Current capabilities
 - Responsive passenger dashboard and journey planner interface.
 - Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.
-- Map attribution to OpenStreetMap contributors; map markers are not represented as APSRTC depots or bus stops.
+- Map attribution to OpenStreetMap contributors; city reference markers are not represented as APSRTC depots or bus stops.
 - Official-source links for ticket booking and APSRTC live tracking.
 - Official APSRTC Live Track and ticket-booking links.
 - Live bus positions and trip updates from an independent community GTFS-Realtime mirror, only when the feed is fresh.\n- Live bus map markers refreshed automatically every 30 seconds.\n- Feed freshness checks; positions older than 120 seconds are not shown as live.\n- No simulated vehicles, fabricated ETAs, or invented schedules.
