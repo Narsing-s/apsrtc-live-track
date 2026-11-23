@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const AndhraMap = dynamic(() => import("./components/AndhraMap"), { ssr: false, loading: () => <div className="map-loading">Loading Andhra Pradesh map…</div> });
@@ -9,6 +9,17 @@ import {
   Clock3, Compass, Heart, MapPin, Menu, Navigation,
   Search, ShieldCheck, Ticket, WifiOff, X
 } from "lucide-react";
+
+type LiveVehicle = {
+  id: string; label: string; routeId: string | null; tripId: string | null;
+  latitude: number; longitude: number; speedKph: number | null; bearing: number | null; timestamp: string | null;
+};
+type LiveFeed = {
+  liveTracking: "live" | "stale" | "unavailable";
+  message: string; updatedAt: string | null; ageSeconds: number | null;
+  vehicleCount: number; upstreamVehicleCount: number; vehicles: LiveVehicle[];
+  tripUpdates: unknown[]; sourceLabel: string; attribution: string;
+};
 
 const quickLinks = [
   { icon: BusFront, title: "Find a bus", detail: "Explore available services" },
@@ -30,6 +41,28 @@ export default function Home() {
   const [searched, setSearched] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mapChoice, setMapChoice] = useState<"from" | "to">("from");
+  const [liveData, setLiveData] = useState<LiveFeed | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refreshLiveData = async () => {
+      try {
+        const response = await fetch("/api/live-status", { cache: "no-store" });
+        const data = await response.json() as LiveFeed;
+        if (active) setLiveData(data);
+      } catch {
+        if (active) setLiveData({
+          liveTracking: "unavailable", message: "Could not reach the live data service.",
+          updatedAt: null, ageSeconds: null, vehicleCount: 0, upstreamVehicleCount: 0,
+          vehicles: [], tripUpdates: [], sourceLabel: "Community mirror status unavailable",
+          attribution: "Live feed could not be checked."
+        });
+      }
+    };
+    refreshLiveData();
+    const timer = window.setInterval(refreshLiveData, 30000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   function chooseMapCity(city: string) {
     if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }
@@ -102,15 +135,27 @@ export default function Home() {
       <section className="map-section" id="map">
         <div className="section-heading"><div><span className="section-kicker">EXPLORE THE REGION</span><h2>Andhra Pradesh, on the map.</h2></div><p>Choose a city to add it to your journey.</p></div>
         <div className="map-layout">
-          <div className="map-frame"><AndhraMap onChoose={chooseMapCity} /><div className="map-legend"><span><i /> City reference points</span><span className="map-note">Not bus depots or live vehicle locations</span></div></div>
+          <div className="map-frame"><AndhraMap onChoose={chooseMapCity} vehicles={liveData?.vehicles ?? []} /><div className="map-legend"><span><i /> City reference points</span><span className="map-note">Not bus depots or live vehicle locations</span></div></div>
           <aside className="map-aside"><span className="section-kicker">PICK A DESTINATION</span><h3>Explore major city hubs</h3><p>Tap a marker on the map or choose a city below. The selection fills your trip planner; it does not imply a confirmed APSRTC service.</p><div className="map-city-list">{["Visakhapatnam","Rajamahendravaram","Kakinada","Vijayawada","Guntur","Amaravati","Ongole","Nellore","Tirupati","Kadapa","Kurnool","Anantapur"].map(city => <button key={city} type="button" onClick={() => chooseMapCity(city)}><MapPin size={14}/>{city}<ArrowUpRight size={13}/></button>)}</div><div className="map-select-hint">Next selection: <strong>{mapChoice === "from" ? "Starting city" : "Destination city"}</strong></div></aside>
         </div>
         <p className="map-attribution">Map tiles © OpenStreetMap contributors. Markers are approximate city-centre reference points, not verified APSRTC stops.</p>
       </section>
 
       <section className="tracking-section" id="tracking">
-        <div className="tracking-copy"><span className="section-kicker">REAL-TIME, WHEN VERIFIED</span><h2>Know where your<br /><em>bus really is.</em></h2><p>Live vehicle positions must come directly from an authorized APSRTC data connection. We never invent bus locations, arrival times or service status.</p><a className="primary-link" href="https://www.apsrtclivetrack.com/" target="_blank" rel="noreferrer">Open official Live Track <ArrowUpRight size={16} /></a></div>
-        <div className="tracking-card"><div className="tracking-card-top"><div className="live-label"><span className="status-dot" /> LIVE TRACKING CONNECTION</div><span className="lock-icon"><ShieldCheck size={17} /></span></div><div className="tracking-empty"><div className="signal-icon"><WifiOff size={27} /></div><strong>Official GPS connection not yet available</strong><p>Waiting for authorized APSRTC API access. Your live map will appear here after integration is approved and tested.</p><span className="status-pill"><i /> NOT CONNECTED</span></div><div className="tracking-card-foot"><span>Data source</span><strong>APSRTC authorization pending</strong></div></div>
+        <div className="tracking-copy"><span className="section-kicker">LIVE VEHICLE DATA</span><h2>Know where your<br /><em>bus really is.</em></h2><p>Vehicle positions refresh automatically every 30 seconds from a community-maintained APSRTC GTFS real-time mirror. This is independent data, not an APSRTC-operated API. Always verify critical journeys with APSRTC.</p><a className="primary-link" href="https://www.apsrtclivetrack.com/" target="_blank" rel="noreferrer">Open official Live Track <ArrowUpRight size={16} /></a></div>
+        <div className="tracking-card">
+          <div className="tracking-card-top"><div className="live-label"><span className="status-dot" style={{background: liveData?.liveTracking === "live" ? "#249b60" : "#d2a14b"}} /> APSRTC REAL-TIME FEED</div><span className="lock-icon"><ShieldCheck size={17} /></span></div>
+          <div className="tracking-empty">
+            <div className="signal-icon"><BusFront size={27} /></div>
+            <strong>{liveData?.liveTracking === "live" ? `${liveData.vehicleCount.toLocaleString("en-IN")} buses reporting` : liveData?.liveTracking === "stale" ? "Live feed is delayed" : "Checking live vehicle feed…"}</strong>
+            <p>{liveData?.message ?? "Connecting to the public real-time feed. Please wait…"}</p>
+            <span className="status-pill" style={{background: liveData?.liveTracking === "live" ? "#eaf6ee" : "#f7f4ea", color: liveData?.liveTracking === "live" ? "#287449" : "#94763e"}}><i style={{background: liveData?.liveTracking === "live" ? "#249b60" : "#c79d4e"}} /> {(liveData?.liveTracking ?? "checking").toUpperCase()}</span>
+            {liveData?.liveTracking === "live" && <p style={{marginTop:12}}>{liveData.tripUpdates.length.toLocaleString("en-IN")} trip updates available · refreshed every 30 seconds</p>}
+          </div>
+          <div className="tracking-card-foot"><span>Source</span><strong>{liveData?.sourceLabel ?? "Checking community mirror"}</strong></div>
+          <div className="tracking-card-foot" style={{marginTop:10}}><span>Last source update</span><strong>{liveData?.updatedAt ? new Date(liveData.updatedAt).toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "Not available"}</strong></div>
+          <p style={{fontSize:9,lineHeight:1.5,color:"#8b968c",margin:"12px 0 0"}}>Unofficial community source · Not endorsed by APSRTC · {liveData?.attribution ?? "Source attribution pending"}</p>
+        </div>
       </section>
 
       <section className="trust-strip"><div><ShieldCheck size={22} /><span><strong>No fabricated live data</strong><small>Only verified information is labelled live.</small></span></div><div><BusFront size={22} /><span><strong>Passenger-first design</strong><small>Simple tools for everyday journeys.</small></span></div><div><Heart size={22} /><span><strong>Made for Andhra Pradesh</strong><small>Designed with local travellers in mind.</small></span></div></section>
