@@ -5,6 +5,8 @@ import L from "leaflet";
 
 export type CityHub = { name: string; lat: number; lng: number; note: string };
 
+export type LiveVehicle = { id: string; label: string; routeId: string | null; tripId: string | null; latitude: number; longitude: number; speedKph: number | null; bearing: number | null; timestamp: string | null };
+
 export const CITY_HUBS: CityHub[] = [
   { name: "Visakhapatnam", lat: 17.6868, lng: 83.2185, note: "North-coastal city reference point" },
   { name: "Rajamahendravaram", lat: 17.0005, lng: 81.8040, note: "Godavari region reference point" },
@@ -20,6 +22,13 @@ export const CITY_HUBS: CityHub[] = [
   { name: "Anantapur", lat: 14.6819, lng: 77.6006, note: "Anantapur city reference point" }
 ];
 
+const busIcon = L.divIcon({
+  className: "apsrtc-live-bus-icon",
+  html: '<span class="apsrtc-live-bus-marker">🚌</span>',
+  iconSize: [30, 30],
+  iconAnchor: [15, 15]
+});
+
 const hubIcon = L.divIcon({
   className: "apsrtc-map-marker",
   html: '<span class="apsrtc-map-marker-core"></span>',
@@ -27,7 +36,7 @@ const hubIcon = L.divIcon({
   iconAnchor: [11, 11]
 });
 
-export default function AndhraMap({ onChoose }: { onChoose: (city: string) => void }) {
+export default function AndhraMap({ onChoose, vehicles = [] }: { onChoose: (city: string) => void; vehicles?: LiveVehicle[] }) {
   return (
     <MapContainer center={[16.2, 80.2]} zoom={6.3} minZoom={5} maxZoom={12} scrollWheelZoom={false} zoomControl={false} className="andhra-map">
       <TileLayer
@@ -35,6 +44,19 @@ export default function AndhraMap({ onChoose }: { onChoose: (city: string) => vo
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ZoomControl position="bottomright" />
+      {vehicles.map((vehicle) => (
+        <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={busIcon}>
+          <Popup>
+            <div className="map-popup">
+              <strong>{vehicle.label}</strong>
+              <span>Route: {vehicle.routeId ?? "Not matched"}</span>
+              {vehicle.speedKph !== null && <span>Speed: {vehicle.speedKph} km/h</span>}
+              {vehicle.timestamp && <span>GPS update: {new Date(vehicle.timestamp).toLocaleTimeString("en-IN")}</span>}
+              <span>Live position from an unofficial community feed</span>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
       {CITY_HUBS.map((hub) => (
         <Marker key={hub.name} position={[hub.lat, hub.lng]} icon={hubIcon}>
           <Popup>
