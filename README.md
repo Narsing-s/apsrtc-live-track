@@ -36,3 +36,21 @@ Import `Narsing-s/apsrtc-live-track` into Vercel, select Next.js, and deploy fro
 
 ## Contact APSRTC
 Ask APSRTC for an authorized third-party GPS/API integration process and written permission before connecting this application to internal tracking services.
+
+## Requesting authorized GPS/API access
+
+APSRTC's official IT initiatives page confirms that its Vehicle Tracking System sends GPS coordinates to its Central Data Center and that passenger access is provided through its Live Track app and web portal. This confirms the existence of the tracking system, **not** public third-party API availability.
+
+For an integration request, start with the official contacts listed by APSRTC:
+- Chief Engineer (IT): **ceit@apsrtc.ap.gov.in** | 9100667958
+- Executive Director (IT): **edenit@apsrtc.ap.gov.in** | 9154104411
+- APSRTC IT app support shown on the official Live Track app listing: **atm2comp@apsrtc.ap.gov.in**
+
+Ask for written approval, a developer/sandbox API, authentication and rate-limit documentation, allowed fields, attribution requirements, security requirements, and production access terms. Do not reverse-engineer or reuse private app endpoints.
+
+Official references:
+- APSRTC Vehicle Tracking System: https://www.apsrtc.ap.gov.in/itinitiatives.php
+- APSRTC Corporate Office contacts: https://www.apsrtc.ap.gov.in/Corporate_Office.php
+- APSRTC official site: https://apsrtc.ap.gov.in/
+
+A request email template is available at [docs/APSRTC-API-ACCESS-REQUEST.md](docs/APSRTC-API-ACCESS-REQUEST.md).
