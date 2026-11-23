@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Plan journeys across Andhra Pradesh, discover bus services and access official APSRTC tracking.",
   applicationName: "APSRTC Live",
   manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
   themeColor: "#071b17"
 };
 
