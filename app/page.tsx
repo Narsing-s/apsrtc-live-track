@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+const AndhraMap = dynamic(() => import("./components/AndhraMap"), { ssr: false, loading: () => <div className="map-loading">Loading Andhra Pradesh map…</div> });
 import {
   ArrowDownUp, ArrowRight, ArrowUpRight, BusFront, CalendarDays, Check,
   ChevronDown, Clock3, Compass, Heart, MapPin, Menu, Navigation,
@@ -25,7 +28,7 @@ export default function Home() {
   const [to, setTo] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [searched, setSearched] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);\n  const [mapChoice, setMapChoice] = useState<"from" | "to">("from");\n\n  function chooseMapCity(city: string) {\n    if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }\n    else { setTo(city); setMapChoice("from"); }\n    document.getElementById("journey")?.scrollIntoView({ behavior: "smooth" });\n  }
 
   function swapPlaces() {
     setFrom(to);
@@ -48,7 +51,7 @@ export default function Home() {
         <nav className={menuOpen ? "nav-links nav-open" : "nav-links"}>
           <a className="nav-active" href="#journey" onClick={() => setMenuOpen(false)}>Plan journey</a>
           <a href="#tracking" onClick={() => setMenuOpen(false)}>Live tracking</a>
-          <a href="#discover" onClick={() => setMenuOpen(false)}>Explore</a>
+          <a href="#map" onClick={() => setMenuOpen(false)}>Explore map</a>
           <a href="#help" onClick={() => setMenuOpen(false)}>Help</a>
         </nav>
         <a className="nav-cta" href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer">Book tickets <ArrowUpRight size={15} /></a>
@@ -87,6 +90,15 @@ export default function Home() {
       <section className="quick-section" id="discover">
         <div className="section-heading"><div><span className="section-kicker">YOUR TRAVEL TOOLKIT</span><h2>Everything starts here.</h2></div><p>Useful links and tools for a smoother trip.</p></div>
         <div className="quick-grid">{quickLinks.map((item, i) => { const Icon = item.icon; const href = i === 2 ? "https://www.apsrtconline.in/" : i === 3 ? "https://www.apsrtclivetrack.com/" : i === 1 ? "https://www.google.com/maps/search/bus+stations+Andhra+Pradesh" : "#journey"; return <a className="quick-card" href={href} target={i === 0 ? undefined : "_blank"} rel={i === 0 ? undefined : "noreferrer"} key={item.title}><span className="quick-icon"><Icon size={21} /></span><span className="quick-text"><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight className="quick-arrow" size={17} /></a>; })}</div>
+      </section>
+
+      <section className="map-section" id="map">
+        <div className="section-heading"><div><span className="section-kicker">EXPLORE THE REGION</span><h2>Andhra Pradesh, on the map.</h2></div><p>Choose a city to add it to your journey.</p></div>
+        <div className="map-layout">
+          <div className="map-frame"><AndhraMap onChoose={chooseMapCity} /><div className="map-legend"><span><i /> City reference points</span><span className="map-note">Not bus depots or live vehicle locations</span></div></div>
+          <aside className="map-aside"><span className="section-kicker">PICK A DESTINATION</span><h3>Explore major city hubs</h3><p>Tap a marker on the map or choose a city below. The selection fills your trip planner; it does not imply a confirmed APSRTC service.</p><div className="map-city-list">{["Visakhapatnam","Rajamahendravaram","Kakinada","Vijayawada","Guntur","Amaravati","Ongole","Nellore","Tirupati","Kadapa","Kurnool","Anantapur"].map(city => <button key={city} type="button" onClick={() => chooseMapCity(city)}><MapPin size={14}/>{city}<ArrowUpRight size={13}/></button>)}</div><div className="map-select-hint">Next selection: <strong>{mapChoice === "from" ? "Starting city" : "Destination city"}</strong></div></aside>
+        </div>
+        <p className="map-attribution">Map tiles © OpenStreetMap contributors. Markers are approximate city-centre reference points, not verified APSRTC stops.</p>
       </section>
 
       <section className="tracking-section" id="tracking">
