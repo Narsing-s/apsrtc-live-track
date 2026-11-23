@@ -6,7 +6,7 @@ export const revalidate = 0;
 const SOURCE = "https://maps.reclaim.city/apsrtc/rt";
 const MAX_FEED_AGE_SECONDS = 120;
 
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): AnyRecord {
   return value && typeof value === "object" ? value as AnyRecord : {};
