@@ -8,7 +8,10 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 - Map attribution to OpenStreetMap contributors; city reference markers are not represented as APSRTC depots or bus stops.
 - Official-source links for ticket booking and APSRTC live tracking.
 - Official APSRTC Live Track and ticket-booking links.
-- Live bus positions and trip updates from an independent community GTFS-Realtime mirror, only when the feed is fresh.\n- Live bus map markers refreshed automatically every 30 seconds.\n- Feed freshness checks; positions older than 120 seconds are not shown as live.\n- No simulated vehicles, fabricated ETAs, or invented schedules.
+- Live bus positions and trip updates from an independent community GTFS-Realtime mirror, only when the feed is fresh.
+- Live bus map markers refreshed automatically every 30 seconds.
+- Feed freshness checks; positions older than 120 seconds are not shown as live.
+- No simulated vehicles, fabricated ETAs, or invented schedules.
 - API status endpoint at `/api/live-status`.
 - PWA manifest and Vercel-ready Next.js setup.
 - GitHub Actions build validation on pushes and pull requests.
