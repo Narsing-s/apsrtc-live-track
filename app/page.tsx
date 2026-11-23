@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 
 const AndhraMap = dynamic(() => import("./components/AndhraMap"), { ssr: false, loading: () => <div className="map-loading">Loading Andhra Pradesh map…</div> });
 import {
-  ArrowDownUp, ArrowRight, ArrowUpRight, BusFront, CalendarDays, Check,
-  ChevronDown, Clock3, Compass, Heart, MapPin, Menu, Navigation,
+  ArrowDownUp, ArrowRight, ArrowUpRight, BusFront, CalendarDays,
+  Clock3, Compass, Heart, MapPin, Menu, Navigation,
   Search, ShieldCheck, Ticket, WifiOff, X
 } from "lucide-react";
 
@@ -90,7 +90,7 @@ export default function Home() {
           <label className="date-field"><span>JOURNEY DATE</span><div><CalendarDays size={18} /><input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={e => setDate(e.target.value)} required /></div></label>
           <button className="search-button" type="submit"><Search size={18} /> Find buses <ArrowRight size={16} /></button>
         </form>
-        {searched && <div className="search-feedback"><div className="feedback-icon"><Clock3 size={19} /></div><div><strong>Schedule connection coming next</strong><p>We received your search for {from} to {to} on {date}. Verified APSRTC timetable data is not connected yet, so we won't show unverified services or timings.</p><a href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer">Check official availability <ArrowUpRight size={14} /></a></div></div>}
+        {searched && <div className="search-feedback"><div className="feedback-icon"><Clock3 size={19} /></div><div><strong>Schedule connection coming next</strong><p>We received your search for {from} to {to} on {date}. Verified APSRTC timetable data is not connected yet, so we won&apos;t show unverified services or timings.</p><a href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer">Check official availability <ArrowUpRight size={14} /></a></div></div>}
         <div className="popular-row"><span>POPULAR DESTINATIONS</span>{["Vijayawada", "Visakhapatnam", "Tirupati", "Guntur", "Kurnool"].map(city => <button key={city} onClick={() => { setTo(city); setSearched(false); }}>{city}</button>)}</div>
       </section>
 
