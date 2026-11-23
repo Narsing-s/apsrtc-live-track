@@ -1,0 +1,10 @@
+{
+  "name": "APSRTC Live",
+  "short_name": "APSRTC Live",
+  "description": "Plan journeys and access official APSRTC bus tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071b17",
+  "theme_color": "#071b17",
+  "icons": []
+}
