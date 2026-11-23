@@ -8,20 +8,25 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 - Map attribution to OpenStreetMap contributors; map markers are not represented as APSRTC depots or bus stops.
 - Official-source links for ticket booking and APSRTC live tracking.
 - Official APSRTC Live Track and ticket-booking links.
-- Explicit live GPS connection status; no simulated vehicles, fake ETAs, or fabricated schedules.
+- Live bus positions and trip updates from an independent community GTFS-Realtime mirror, only when the feed is fresh.\n- Live bus map markers refreshed automatically every 30 seconds.\n- Feed freshness checks; positions older than 120 seconds are not shown as live.\n- No simulated vehicles, fabricated ETAs, or invented schedules.
 - API status endpoint at `/api/live-status`.
 - PWA manifest and Vercel-ready Next.js setup.
 - GitHub Actions build validation on pushes and pull requests.
 
-## Live GPS: authorization required
-APSRTC operates GPS-enabled bus tracking infrastructure, but this project does not assume that a public third-party API is available. Before showing vehicle positions:
-1. Obtain written authorization from APSRTC.
-2. Obtain the official API documentation, authentication method, permitted use, rate limits, and data-retention terms.
-3. Configure `APSRTC_LIVE_API_URL` and `APSRTC_LIVE_API_KEY` in Vercel.
-4. Implement and validate the provider adapter against the approved contract.
-5. Display source and last-updated time with every live result.
+## Live data integration and source transparency
 
-Until then, the UI clearly marks live GPS as unavailable and links passengers to APSRTC's official tracker.
+The app reads APSRTC statewide GTFS-Realtime vehicle-position and trip-update JSON feeds from the public `reclaimchennai/India_GTFS` community project through `maps.reclaim.city`.
+
+- Vehicle positions: `https://maps.reclaim.city/apsrtc/rt/vehicle_positions.json`
+- Trip updates: `https://maps.reclaim.city/apsrtc/rt/trip_updates.json`
+- Feed health/freshness: `https://maps.reclaim.city/apsrtc/rt/status.json`
+- Feed project and source notes: `https://github.com/reclaimchennai/India_GTFS`
+
+The server endpoint `/api/live-status` checks the upstream feed timestamp and coordinates. It only returns vehicles as live when the newest upstream position is no more than 120 seconds old. The browser refreshes every 30 seconds. If the feed is unavailable or stale, the UI reports that state and does not display stale vehicles as live.
+
+**Important:** This is an independent community-maintained mirror, not an APSRTC-operated or APSRTC-endorsed API. The project's APSRTC feed source lists no licence. Attribution is displayed in the app; obtain written permission/clarification from the data publisher and APSRTC before commercial use or claiming official status. APSRTC's official tracker remains the authority for passenger decisions.
+
+Static GTFS schedules are listed by the community project but are not yet integrated into the journey search. The journey planner must continue to state that verified timetable search is not connected until a schedule integration is implemented and validated. No GPS locations, bus schedules, ETAs, or service statuses are fabricated.
 
 ## Official APSRTC links
 - Website: https://apsrtc.ap.gov.in/
