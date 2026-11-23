@@ -7,7 +7,7 @@ const AndhraMap = dynamic(() => import("./components/AndhraMap"), { ssr: false, 
 import {
   ArrowDownUp, ArrowRight, ArrowUpRight, BusFront, CalendarDays,
   Clock3, Compass, Heart, MapPin, Menu, Navigation,
-  Search, ShieldCheck, Ticket, WifiOff, X
+  Search, ShieldCheck, Ticket, X
 } from "lucide-react";
 
 type LiveVehicle = {
