@@ -1,7 +1,8 @@
 "use client";
 
 import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from "react-leaflet";
-import L from "leaflet";\nimport { useEffect } from "react";
+import L from "leaflet";
+import { useEffect } from "react";
 
 export type CityHub = { name: string; lat: number; lng: number; note: string };
 
