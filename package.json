@@ -14,7 +14,8 @@
     "react-dom": "19.1.1",
     "lucide-react": "^0.468.0",
     "leaflet": "^1.9.4",
-    "react-leaflet": "^5.0.0"
+    "react-leaflet": "^5.0.0",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
