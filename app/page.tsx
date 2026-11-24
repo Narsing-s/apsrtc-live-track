@@ -14,6 +14,9 @@ type LiveVehicle = {
   id: string; label: string; routeId: string | null; tripId: string | null;
   latitude: number; longitude: number; speedKph: number | null; bearing: number | null; timestamp: string | null;
 };
+type PlaceResult = { id: string; name: string; displayName: string; lat: number; lon: number; type: string };
+type UserPosition = { lat: number; lon: number };
+type NearbyStop = { id: string; name: string; lat: number; lon: number; kind: string };
 type LiveFeed = {
   liveTracking: "live" | "stale" | "unavailable";
   message: string; updatedAt: string | null; ageSeconds: number | null;
@@ -42,6 +45,12 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mapChoice, setMapChoice] = useState<"from" | "to">("from");
   const [liveData, setLiveData] = useState<LiveFeed | null>(null);
+  const [activeField, setActiveField] = useState<"from" | "to" | null>(null);
+  const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
+  const [userLocation, setUserLocation] = useState<UserPosition | null>(null);
+  const [locationLabel, setLocationLabel] = useState("");
+  const [nearbyStops, setNearbyStops] = useState<NearbyStop[]>([]);
+  const [locationMessage, setLocationMessage] = useState("Location permission has not been requested.");
 
   useEffect(() => {
     let active = true;
@@ -115,11 +124,12 @@ export default function Home() {
       </section>
 
       <section className="search-section">
-        <div className="search-heading"><div><span className="section-kicker">START YOUR TRIP</span><h2>Where would you like to go?</h2></div><span className="search-note"><ShieldCheck size={15} /> Plan with confidence</span></div>
+        <div className="search-heading"><div><span className="section-kicker">START YOUR TRIP</span><h2>Where would you like to go?</h2></div><button type="button" onClick={requestLocation} className="search-note" style={{border:0,background:"transparent",cursor:"pointer"}}><Navigation size={15} /> Use my location</button></div>
+        <p style={{fontSize:12,color:"#718071",margin:"-12px 0 16px"}}>{locationMessage}{locationLabel ? ` · ${locationLabel}` : ""}</p>
         <form className="journey-form" onSubmit={submitSearch}>
-          <label className="place-field"><span>FROM</span><div><MapPin size={19} /><input value={from} onChange={e => setFrom(e.target.value)} placeholder="Leaving from" required /></div></label>
+          <label className="place-field"><span>FROM</span><div><MapPin size={19} /><input value={from} onFocus={() => setActiveField("from")} onChange={e => { setFrom(e.target.value); setActiveField("from"); }} placeholder="Leaving from" required autoComplete="off" /></div></label>
           <button className="swap-button" type="button" onClick={swapPlaces} aria-label="Swap origin and destination"><ArrowDownUp size={18} /></button>
-          <label className="place-field"><span>TO</span><div><Navigation size={18} /><input value={to} onChange={e => setTo(e.target.value)} placeholder="Going to" required /></div></label>
+          <label className="place-field"><span>TO</span><div><Navigation size={18} /><input value={to} onFocus={() => setActiveField("to")} onChange={e => { setTo(e.target.value); setActiveField("to"); }} placeholder="Going to" required autoComplete="off" /></div></label>
           <label className="date-field"><span>JOURNEY DATE</span><div><CalendarDays size={18} /><input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={e => setDate(e.target.value)} required /></div></label>
           <button className="search-button" type="submit"><Search size={18} /> Find buses <ArrowRight size={16} /></button>
         </form>
@@ -135,14 +145,20 @@ export default function Home() {
       <section className="map-section" id="map">
         <div className="section-heading"><div><span className="section-kicker">EXPLORE THE REGION</span><h2>Andhra Pradesh, on the map.</h2></div><p>Choose a city to add it to your journey.</p></div>
         <div className="map-layout">
-          <div className="map-frame"><AndhraMap onChoose={chooseMapCity} vehicles={liveData?.vehicles ?? []} /><div className="map-legend"><span><i /> City reference points</span><span><i className="live-map-legend-dot" /> Live buses</span><span className="map-note">Bus pins appear only when the feed is fresh</span></div></div>
+          <div className="map-frame"><AndhraMap onChoose={chooseMapCity} vehicles={liveData?.vehicles ?? []} userLocation={userLocation} nearbyStops={nearbyStops} /><div className="map-legend"><span><i /> City reference points</span><span><i className="live-map-legend-dot" /> Live buses</span><span className="map-note">Bus pins appear only when the feed is fresh</span></div></div>
           <aside className="map-aside"><span className="section-kicker">PICK A DESTINATION</span><h3>Explore major city hubs</h3><p>Tap a marker on the map or choose a city below. The selection fills your trip planner; it does not imply a confirmed APSRTC service.</p><div className="map-city-list">{["Visakhapatnam","Rajamahendravaram","Kakinada","Vijayawada","Guntur","Amaravati","Ongole","Nellore","Tirupati","Kadapa","Kurnool","Anantapur"].map(city => <button key={city} type="button" onClick={() => chooseMapCity(city)}><MapPin size={14}/>{city}<ArrowUpRight size={13}/></button>)}</div><div className="map-select-hint">Next selection: <strong>{mapChoice === "from" ? "Starting city" : "Destination city"}</strong></div></aside>
         </div>
         <p className="map-attribution">Map tiles © OpenStreetMap contributors. Markers are approximate city-centre reference points, not verified APSRTC stops.</p>
       </section>
 
+      <section className="quick-section" id="nearby">
+        <div className="section-heading"><div><span className="section-kicker">AROUND YOU</span><h2>Nearby bus stops.</h2></div><p>Based on your device location and OpenStreetMap data.</p></div>
+        {userLocation ? <div className="map-city-list" style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:10}}>{nearbyStops.length ? nearbyStops.map(stop => <div key={stop.id} style={{background:"#fff",border:"1px solid #e7ece7",padding:14,borderRadius:12}}><strong>{stop.name}</strong><small style={{display:"block",color:"#718071",marginTop:4}}>{stop.kind}</small><a style={{fontSize:12}} href={`https://www.google.com/maps/dir/?api=1&destination=${stop.lat},${stop.lon}`} target="_blank" rel="noreferrer">Directions <ArrowUpRight size={12}/></a></div>) : <p>No mapped bus stops found nearby, or the map service is temporarily unavailable.</p>}</div> : <p>Allow location access to discover mapped stops around you.</p>}
+        <p style={{fontSize:11,color:"#7b887c",marginTop:12}}>Nearby stops are OpenStreetMap community data; they are not proof of an active APSRTC service.</p>
+      </section>
+
       <section className="tracking-section" id="tracking">
-        <div className="tracking-copy"><span className="section-kicker">LIVE VEHICLE DATA</span><h2>Know where your<br /><em>bus really is.</em></h2><p>Vehicle positions refresh automatically every 30 seconds from a community-maintained APSRTC GTFS real-time mirror. This is independent data, not an APSRTC-operated API. Always verify critical journeys with APSRTC.</p><a className="primary-link" href="https://www.apsrtclivetrack.com/" target="_blank" rel="noreferrer">Open official Live Track <ArrowUpRight size={16} /></a></div>
+        <div className="tracking-copy"><span className="section-kicker">LIVE VEHICLE DATA</span><h2>Know where your<br /><em>bus really is.</em></h2><p>Vehicle positions refresh automatically every 30 seconds from a community-maintained APSRTC GTFS real-time mirror. This is independent data, not an APSRTC-operated API. Always verify critical journeys with APSRTC.</p><a className="primary-link" href="https://www.apsrtclivetrack.com/" target="_blank" rel="noreferrer">Open official Live Track <ArrowUpRight size={16} /></a><a className="primary-link" style={{marginLeft:12}} href={userLocation ? `https://www.google.com/maps/@?api=1&map_action=map&center=${userLocation.lat},${userLocation.lon}&layer=traffic` : "https://www.google.com/maps"} target="_blank" rel="noreferrer">View traffic map <ArrowUpRight size={16}/></a></div>
         <div className="tracking-card">
           <div className="tracking-card-top"><div className="live-label"><span className="status-dot" style={{background: liveData?.liveTracking === "live" ? "#249b60" : "#d2a14b"}} /> APSRTC REAL-TIME FEED</div><span className="lock-icon"><ShieldCheck size={17} /></span></div>
           <div className="tracking-empty">
