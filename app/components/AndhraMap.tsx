@@ -54,7 +54,7 @@ const hubIcon = L.divIcon({
   iconAnchor: [11, 11]
 });
 
-export default function AndhraMap({ onChoose, vehicles = [], userLocation = null, nearbyStops = [], selectedVehicle = null }: { onChoose: (city: string) => void; vehicles?: LiveVehicle[]; userLocation?: UserPosition | null; nearbyStops?: NearbyStop[]; selectedVehicle?: LiveVehicle | null }) {
+export default function AndhraMap({ onChoose, onSelectVehicle, vehicles = [], userLocation = null, nearbyStops = [], selectedVehicle = null }: { onChoose: (city: string) => void; onSelectVehicle: (vehicle: LiveVehicle) => void; vehicles?: LiveVehicle[]; userLocation?: UserPosition | null; nearbyStops?: NearbyStop[]; selectedVehicle?: LiveVehicle | null }) {
   return (
     <MapContainer center={[16.2, 80.2]} zoom={6.3} minZoom={5} maxZoom={12} scrollWheelZoom={false} zoomControl={false} className="andhra-map">
       <TileLayer
@@ -64,14 +64,14 @@ export default function AndhraMap({ onChoose, vehicles = [], userLocation = null
       <ZoomControl position="bottomright" />\n      <FollowUser location={userLocation} />
       <FollowBus vehicle={selectedVehicle} />\n      {userLocation && <Marker position={[userLocation.lat, userLocation.lon]} icon={userIcon}><Popup><strong>Your current location</strong></Popup></Marker>}\n      {nearbyStops.map(stop => <Marker key={stop.id} position={[stop.lat, stop.lon]} icon={stopIcon}><Popup><strong>{stop.name}</strong><span>{stop.kind} · OpenStreetMap mapped location</span></Popup></Marker>)}
       {vehicles.map((vehicle) => (
-        <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={busIcon}>
+        <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={busIcon} eventHandlers={{ click: () => onSelectVehicle(vehicle) }}>
           <Popup>
             <div className="map-popup">
               <strong>{vehicle.label}</strong>
               <span>Route: {vehicle.routeId ?? "Not matched"}</span>
               {vehicle.speedKph !== null && <span>Speed: {vehicle.speedKph} km/h</span>}
               {vehicle.timestamp && <span>GPS update: {new Date(vehicle.timestamp).toLocaleTimeString("en-IN")}</span>}
-              <span>Live position from an unofficial community feed</span>
+              <span>Tap this bus marker to open its live tracking details</span>
             </div>
           </Popup>
         </Marker>
