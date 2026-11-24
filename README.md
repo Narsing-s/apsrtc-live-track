@@ -5,7 +5,7 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 ## Current capabilities
 - Responsive passenger dashboard and journey planner interface.
 - Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.
-- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.
+- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.\n- Direct journey timetable search from the APSRTC GTFS static feed (`stops.txt`, `routes.txt`, `trips.txt`, `stop_times.txt`, `calendar.txt`, and `calendar_dates.txt`) through `/api/journeys`.\n- Search results include scheduled departure/arrival, route, trip ID, and intermediate-stop count when present in the feed.
 - Browser geolocation with explicit permission; reverse-geocoded current location and a blue location marker.
 - Nearby mapped bus stops discovered within 2 km using OpenStreetMap Overpass.
 - Nearby live-bus shortlist within 5 km, calculated from fresh community GTFS-Realtime vehicle positions.
@@ -34,7 +34,7 @@ The server endpoint `/api/live-status` checks the upstream feed timestamp and co
 
 **Important:** This is an independent community-maintained mirror, not an APSRTC-operated or APSRTC-endorsed API. The project's APSRTC feed source lists no licence. Attribution is displayed in the app; obtain written permission/clarification from the data publisher and APSRTC before commercial use or claiming official status. APSRTC's official tracker remains the authority for passenger decisions.
 
-Static GTFS schedules are listed by the community project but are not yet integrated into the journey search. Place autocomplete is geographic discovery only; it does not confirm APSRTC stops, routes, or bus service. Nearby stop results come from OpenStreetMap community mapping and may be incomplete. Nominatim and Overpass are public community services and can rate-limit or be temporarily unavailable. Live traffic congestion is not currently integrated; the traffic link opens an external Google Maps traffic view. The journey planner must continue to state that verified timetable search is not connected until a schedule integration is implemented and validated. No GPS locations, bus schedules, ETAs, or service statuses are fabricated.
+The journey planner uses the APSRTC static GTFS feed mirrored by the community `reclaimchennai/India_GTFS` project. It currently finds direct scheduled trips only; transfer planning and fare/seat availability are not implemented. Place autocomplete is geographic discovery only; it does not confirm APSRTC stops, routes, or bus service. Nearby stop results come from OpenStreetMap community mapping and may be incomplete. Nominatim and Overpass are public community services and can rate-limit or be temporarily unavailable. Live traffic congestion is not currently integrated; the traffic link opens an external Google Maps traffic view. The journey planner must continue to state that verified timetable search is not connected until a schedule integration is implemented and validated. No GPS locations, bus schedules, ETAs, or service statuses are fabricated.
 
 ## Official APSRTC links
 - Website: https://apsrtc.ap.gov.in/
