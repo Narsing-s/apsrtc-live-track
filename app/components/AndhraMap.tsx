@@ -32,6 +32,13 @@ const busIcon = L.divIcon({
   iconAnchor: [15, 15]
 });
 
+const selectedBusIcon = L.divIcon({
+  className: "apsrtc-live-bus-icon apsrtc-selected-bus-icon",
+  html: '<span style="display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#dff5e7;border:3px solid #16834a;box-shadow:0 0 0 8px #16834a33;font-size:22px">🚌</span>',
+  iconSize: [38, 38],
+  iconAnchor: [19, 19]
+});
+
 const userIcon = L.divIcon({ className: "apsrtc-user-location", html: '<span style="display:block;width:18px;height:18px;background:#2878f0;border:4px solid white;border-radius:50%;box-shadow:0 0 0 8px #2878f044"></span>', iconSize:[26,26], iconAnchor:[13,13] });
 const stopIcon = L.divIcon({ className: "apsrtc-nearby-stop", html: '<span style="display:block;width:12px;height:12px;background:#f0a33a;border:2px solid white;border-radius:50%;box-shadow:0 1px 5px #0005"></span>', iconSize:[16,16], iconAnchor:[8,8] });
 
@@ -64,7 +71,7 @@ export default function AndhraMap({ onChoose, onSelectVehicle, vehicles = [], us
       <ZoomControl position="bottomright" />\n      <FollowUser location={userLocation} />
       <FollowBus vehicle={selectedVehicle} />\n      {userLocation && <Marker position={[userLocation.lat, userLocation.lon]} icon={userIcon}><Popup><strong>Your current location</strong></Popup></Marker>}\n      {nearbyStops.map(stop => <Marker key={stop.id} position={[stop.lat, stop.lon]} icon={stopIcon}><Popup><strong>{stop.name}</strong><span>{stop.kind} · OpenStreetMap mapped location</span></Popup></Marker>)}
       {vehicles.map((vehicle) => (
-        <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={busIcon} eventHandlers={{ click: () => onSelectVehicle(vehicle) }}>
+        <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={selectedVehicle?.id === vehicle.id ? selectedBusIcon : busIcon} eventHandlers={{ click: () => onSelectVehicle(vehicle) }}>
           <Popup>
             <div className="map-popup">
               <strong>{vehicle.label}</strong>
