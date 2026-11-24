@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
       const key = [journey.routeId, journey.departureTime, journey.fromStop, journey.toStop].join("|");
       if (!unique.has(key)) unique.set(key, journey);
     }
-    const results = [...unique.values()].slice(0,25).map(({departureMinutes,...journey}) => journey);
+    const results = [...unique.values()].slice(0,25).map(({departureMinutes,...journey}) => { void departureMinutes; return journey; });
     return NextResponse.json({
       journeys: results,
       message: results.length ? "Matching scheduled trips from the community-maintained APSRTC GTFS timetable." : "No direct scheduled trip was found between the matching stops for this date.",
