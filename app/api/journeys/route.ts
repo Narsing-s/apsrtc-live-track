@@ -112,11 +112,30 @@ export async function GET(request: NextRequest) {
     const feed = await loadFeed();
     const active = activeService(feed, date);
     if (!active.size) return NextResponse.json({ journeys: [], message: "The timetable has no active service calendar for this date.", source: "Community APSRTC GTFS feed", feedInfo: feed.feedInfo });
-    const findStops = (query: string) => feed.stops
-      .map(stop => ({ stop, name: (stop.stop_name || "").toLocaleLowerCase() }))
-      .filter(item => item.name.includes(query))
-      .slice(0, 30);
-    const origins = findStops(from), destinations = findStops(to);
+    const distanceKm = (aLat: number, aLon: number, bLat: number, bLon: number) => {
+      const radians = (value: number) => value * Math.PI / 180;
+      const dLat = radians(bLat - aLat), dLon = radians(bLon - aLon);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(aLat)) * Math.cos(radians(bLat)) * Math.sin(dLon / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    const findStops = (query: string, latValue: string | null, lonValue: string | null) => {
+      const lat = latValue === null ? Number.NaN : Number(latValue);
+      const lon = lonValue === null ? Number.NaN : Number(lonValue);
+      if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+        const nearby = feed.stops.map(stop => ({
+          stop,
+          distance: distanceKm(lat, lon, Number(stop.stop_lat), Number(stop.stop_lon))
+        })).filter(item => Number.isFinite(item.distance) && item.distance <= 25)
+          .sort((a, b) => a.distance - b.distance).slice(0, 20);
+        if (nearby.length) return nearby.map(item => ({ stop: item.stop, name: (item.stop.stop_name || "").toLocaleLowerCase() }));
+      }
+      return feed.stops
+        .map(stop => ({ stop, name: (stop.stop_name || "").toLocaleLowerCase() }))
+        .filter(item => item.name.includes(query))
+        .slice(0, 30);
+    };
+    const origins = findStops(from, params.get("fromLat"), params.get("fromLon"));
+    const destinations = findStops(to, params.get("toLat"), params.get("toLon"));
     if (!origins.length || !destinations.length) return NextResponse.json({
       journeys: [], message: "No matching stops found in the published timetable. Try a nearby bus-stand or stop name.",
       matchedFrom: origins.length, matchedTo: destinations.length, source: "Community APSRTC GTFS feed"
