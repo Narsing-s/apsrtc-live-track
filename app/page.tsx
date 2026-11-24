@@ -16,6 +16,7 @@ type LiveVehicle = {
 };
 type PlaceResult = { id: string; name: string; displayName: string; lat: number; lon: number; type: string };
 type UserPosition = { lat: number; lon: number };
+type PlaceCoordinates = { lat: number; lon: number } | null;
 type NearbyStop = { id: string; name: string; lat: number; lon: number; kind: string };
 type Journey = { tripId: string; routeId: string; routeName: string; routeDescription: string; fromStop: string; toStop: string; departure: string; arrival: string; durationMinutes: number; intermediateStops: number; headsign: string };
 type LiveFeed = {
@@ -41,6 +42,8 @@ const officialLinks = [
 export default function Home() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [fromCoordinates, setFromCoordinates] = useState<PlaceCoordinates>(null);
+  const [toCoordinates, setToCoordinates] = useState<PlaceCoordinates>(null);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [searched, setSearched] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -104,7 +107,7 @@ export default function Home() {
         ]);
         const address = await addressResponse.json(); const stops = await stopResponse.json();
         const label = address.name || address.displayName?.split(",")[0] || "My location";
-        setLocationLabel(label); setFrom(current => current || label);
+        setLocationLabel(label); setFrom(current => current || label); setFromCoordinates(current => current || point);
         setNearbyStops(Array.isArray(stops.stops) ? stops.stops : []);
         setLocationMessage("Your location is detected.");
       } catch { setLocationMessage("Location detected; nearby places could not be loaded."); }
@@ -124,7 +127,7 @@ export default function Home() {
         ]);
         const address = await addressResponse.json(); const stops = await stopResponse.json();
         const label = address.name || address.displayName?.split(",")[0] || "My location";
-        setLocationLabel(label); setFrom(label);
+        setLocationLabel(label); setFrom(label); setFromCoordinates(point);
         setNearbyStops(Array.isArray(stops.stops) ? stops.stops : []);
         setLocationMessage("Your location and nearby stops are loaded.");
       } catch { setLocationMessage("Location detected, but nearby places are unavailable."); }
@@ -132,8 +135,8 @@ export default function Home() {
   }
 
   function chooseSuggestion(place: PlaceResult) {
-    if (activeField === "from") setFrom(place.name);
-    if (activeField === "to") setTo(place.name);
+    if (activeField === "from") { setFrom(place.name); setFromCoordinates({ lat: place.lat, lon: place.lon }); }
+    if (activeField === "to") { setTo(place.name); setToCoordinates({ lat: place.lat, lon: place.lon }); }
     setSuggestions([]); setActiveField(null);
   }
 
@@ -145,20 +148,25 @@ export default function Home() {
   }).filter(bus => bus.distanceKm <= 5).sort((a,b) => a.distanceKm-b.distanceKm) : [];
 
   function chooseMapCity(city: string) {
-    if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }
-    else { setTo(city); setMapChoice("from"); }
+    if (mapChoice === "from") { setFrom(city); setFromCoordinates(null); setMapChoice("to"); }
+    else { setTo(city); setToCoordinates(null); setMapChoice("from"); }
     document.getElementById("journey")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function swapPlaces() {
     setFrom(to);
     setTo(from);
+    setFromCoordinates(toCoordinates);
+    setToCoordinates(fromCoordinates);
   }
 
   async function submitSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setSearched(true); setJourneyLoading(true); setJourneyMessage(""); setJourneys([]);
     try {
-      const response = await fetch(`/api/journeys?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}`);
+      const params = new URLSearchParams({ from, to, date });
+      if (fromCoordinates) { params.set("fromLat", String(fromCoordinates.lat)); params.set("fromLon", String(fromCoordinates.lon)); }
+      if (toCoordinates) { params.set("toLat", String(toCoordinates.lat)); params.set("toLon", String(toCoordinates.lon)); }
+      const response = await fetch(`/api/journeys?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Journey search failed.");
       setJourneys(Array.isArray(data.journeys) ? data.journeys : []);
@@ -205,9 +213,9 @@ export default function Home() {
         <div className="search-heading"><div><span className="section-kicker">START YOUR TRIP</span><h2>Where would you like to go?</h2></div><button type="button" onClick={requestLocation} className="search-note" style={{border:0,background:"transparent",cursor:"pointer"}}><Navigation size={15} /> Use my location</button></div>
         <p style={{fontSize:12,color:"#718071",margin:"-12px 0 16px"}}>{locationMessage}{locationLabel ? ` · ${locationLabel}` : ""}</p>
         <form className="journey-form" onSubmit={submitSearch}>
-          <label className="place-field" style={{position:"relative"}}><span>FROM</span><div><MapPin size={19} /><input value={from} onFocus={() => setActiveField("from")} onChange={e => { setFrom(e.target.value); setActiveField("from"); }} placeholder="Leaving from" required autoComplete="off" /></div>{activeField === "from" && suggestions.length > 0 && <div className="place-suggestions" style={{position:"absolute",zIndex:1000,top:"100%",left:0,right:0,background:"#fff",border:"1px solid #e4e9e1",borderRadius:10,boxShadow:"0 12px 30px #18301b18",maxHeight:230,overflowY:"auto"}}>{suggestions.map(place => <button key={place.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => chooseSuggestion(place)} style={{display:"block",width:"100%",padding:"10px 12px",textAlign:"left",background:"#fff",border:0,borderBottom:"1px solid #eef1ee",cursor:"pointer"}}><strong>{place.name}</strong><small style={{display:"block",color:"#718071",fontSize:10}}>{place.displayName}</small></button>)}</div>}</label>
+          <label className="place-field" style={{position:"relative"}}><span>FROM</span><div><MapPin size={19} /><input value={from} onFocus={() => setActiveField("from")} onChange={e => { setFrom(e.target.value); setFromCoordinates(null); setActiveField("from"); }} placeholder="Leaving from" required autoComplete="off" /></div>{activeField === "from" && suggestions.length > 0 && <div className="place-suggestions" style={{position:"absolute",zIndex:1000,top:"100%",left:0,right:0,background:"#fff",border:"1px solid #e4e9e1",borderRadius:10,boxShadow:"0 12px 30px #18301b18",maxHeight:230,overflowY:"auto"}}>{suggestions.map(place => <button key={place.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => chooseSuggestion(place)} style={{display:"block",width:"100%",padding:"10px 12px",textAlign:"left",background:"#fff",border:0,borderBottom:"1px solid #eef1ee",cursor:"pointer"}}><strong>{place.name}</strong><small style={{display:"block",color:"#718071",fontSize:10}}>{place.displayName}</small></button>)}</div>}</label>
           <button className="swap-button" type="button" onClick={swapPlaces} aria-label="Swap origin and destination"><ArrowDownUp size={18} /></button>
-          <label className="place-field" style={{position:"relative"}}><span>TO</span><div><Navigation size={18} /><input value={to} onFocus={() => setActiveField("to")} onChange={e => { setTo(e.target.value); setActiveField("to"); }} placeholder="Going to" required autoComplete="off" /></div>{activeField === "to" && suggestions.length > 0 && <div className="place-suggestions" style={{position:"absolute",zIndex:1000,top:"100%",left:0,right:0,background:"#fff",border:"1px solid #e4e9e1",borderRadius:10,boxShadow:"0 12px 30px #18301b18",maxHeight:230,overflowY:"auto"}}>{suggestions.map(place => <button key={place.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => chooseSuggestion(place)} style={{display:"block",width:"100%",padding:"10px 12px",textAlign:"left",background:"#fff",border:0,borderBottom:"1px solid #eef1ee",cursor:"pointer"}}><strong>{place.name}</strong><small style={{display:"block",color:"#718071",fontSize:10}}>{place.displayName}</small></button>)}</div>}</label>
+          <label className="place-field" style={{position:"relative"}}><span>TO</span><div><Navigation size={18} /><input value={to} onFocus={() => setActiveField("to")} onChange={e => { setTo(e.target.value); setToCoordinates(null); setActiveField("to"); }} placeholder="Going to" required autoComplete="off" /></div>{activeField === "to" && suggestions.length > 0 && <div className="place-suggestions" style={{position:"absolute",zIndex:1000,top:"100%",left:0,right:0,background:"#fff",border:"1px solid #e4e9e1",borderRadius:10,boxShadow:"0 12px 30px #18301b18",maxHeight:230,overflowY:"auto"}}>{suggestions.map(place => <button key={place.id} type="button" onMouseDown={e => e.preventDefault()} onClick={() => chooseSuggestion(place)} style={{display:"block",width:"100%",padding:"10px 12px",textAlign:"left",background:"#fff",border:0,borderBottom:"1px solid #eef1ee",cursor:"pointer"}}><strong>{place.name}</strong><small style={{display:"block",color:"#718071",fontSize:10}}>{place.displayName}</small></button>)}</div>}</label>
           <label className="date-field"><span>JOURNEY DATE</span><div><CalendarDays size={18} /><input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={e => setDate(e.target.value)} required /></div></label>
           <button className="search-button" type="submit"><Search size={18} /> Find buses <ArrowRight size={16} /></button>
         </form>
