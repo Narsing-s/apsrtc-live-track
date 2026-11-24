@@ -59,6 +59,38 @@ export default function Home() {
   const [journeyMessage, setJourneyMessage] = useState("");
   const [journeyLoading, setJourneyLoading] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<LiveVehicle | null>(null);
+  const [favoriteJourneys, setFavoriteJourneys] = useState<Journey[]>([]);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("apsrtc-live-favorite-journeys");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setFavoriteJourneys(parsed);
+      }
+    } catch { /* Ignore unavailable or invalid local storage. */ }
+    setFavoritesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!favoritesLoaded) return;
+    try { window.localStorage.setItem("apsrtc-live-favorite-journeys", JSON.stringify(favoriteJourneys)); }
+    catch { /* Favorites remain available for this session if storage is full or blocked. */ }
+  }, [favoriteJourneys, favoritesLoaded]);
+
+  function toggleFavorite(journey: Journey) {
+    setFavoriteJourneys(current => current.some(item => item.tripId === journey.tripId)
+      ? current.filter(item => item.tripId !== journey.tripId)
+      : [...current, journey].slice(-20));
+  }
+
+  function useFavorite(journey: Journey) {
+    setFrom(journey.fromStop); setTo(journey.toStop);
+    setFromCoordinates(null); setToCoordinates(null);
+    setSearched(false);
+    document.getElementById("journey")?.scrollIntoView({ behavior: "smooth" });
+  }
 
   useEffect(() => {
     let active = true;
@@ -223,7 +255,7 @@ export default function Home() {
         {searched && <div className="search-feedback" style={{display:"block",marginTop:18}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}><div className="feedback-icon"><Clock3 size={19}/></div><div><strong>{journeyLoading ? "Searching published timetable…" : journeys.length ? `${journeys.length} scheduled direct services found` : "Journey search results"}</strong><p>{journeyMessage}</p></div></div>
           {journeys.length > 0 && <div style={{display:"grid",gap:10,marginTop:14}}>{journeys.map((journey,index)=><article key={journey.tripId+"-"+index} style={{background:"#fff",border:"1px solid #e4ebe4",borderRadius:12,padding:14}}>
-            <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><strong>{journey.routeName}</strong><span style={{fontSize:12,color:"#637363"}}>{journey.durationMinutes ? `${Math.floor(journey.durationMinutes/60)}h ${journey.durationMinutes%60}m` : "Duration unavailable"}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"center"}}><strong>{journey.routeName}</strong><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,color:"#637363"}}>{journey.durationMinutes ? `${Math.floor(journey.durationMinutes/60)}h ${journey.durationMinutes%60}m` : "Duration unavailable"}</span><button type="button" onClick={() => toggleFavorite(journey)} aria-label={favoriteJourneys.some(item => item.tripId === journey.tripId) ? "Remove saved journey" : "Save journey"} style={{display:"inline-flex",alignItems:"center",gap:5,border:"1px solid #e1e9df",borderRadius:7,padding:"7px 9px",background:favoriteJourneys.some(item => item.tripId === journey.tripId) ? "#eaf6ee" : "#fff",color:"#286447",fontSize:11,fontWeight:700,cursor:"pointer"}}><Heart size={14} fill={favoriteJourneys.some(item => item.tripId === journey.tripId) ? "currentColor" : "none"}/>{favoriteJourneys.some(item => item.tripId === journey.tripId) ? "Saved" : "Save"}</button></div></div>
             <div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:10}}><div><strong>{journey.departure}</strong><small style={{display:"block"}}>{journey.fromStop}</small></div><div style={{textAlign:"right"}}><strong>{journey.arrival}</strong><small style={{display:"block"}}>{journey.toStop}</small></div></div>
             <small style={{display:"block",marginTop:8,color:"#68786a"}}>{journey.intermediateStops} intermediate stops · Scheduled trip · {journey.tripId}</small>
             {(() => { const exact = (liveData?.vehicles ?? []).find(bus => bus.tripId === journey.tripId); const routeMatches = (liveData?.vehicles ?? []).filter(bus => bus.routeId === journey.routeId); const matched = exact ?? (routeMatches.length === 1 ? routeMatches[0] : null); return matched ? <button type="button" onClick={() => { setSelectedVehicle(matched); document.getElementById("map")?.scrollIntoView({behavior:"smooth"}); }} style={{display:"inline-flex",alignItems:"center",gap:7,marginTop:10,padding:"9px 12px",border:0,borderRadius:8,background:"#eaf6ee",color:"#216b42",fontWeight:700,cursor:"pointer"}}><Navigation size={15}/> Track this bus · GPS available</button> : <small style={{display:"block",marginTop:9,color:"#8a7045"}}>No fresh GPS vehicle matched to this scheduled service right now.</small>; })()}
@@ -238,6 +270,8 @@ export default function Home() {
         <div className="section-heading"><div><span className="section-kicker">YOUR TRAVEL TOOLKIT</span><h2>Everything starts here.</h2></div><p>Useful links and tools for a smoother trip.</p></div>
         <div className="quick-grid">{quickLinks.map((item, i) => { const Icon = item.icon; const href = i === 2 ? "https://www.apsrtconline.in/" : i === 3 ? "https://www.apsrtclivetrack.com/" : i === 1 ? "https://www.google.com/maps/search/bus+stations+Andhra+Pradesh" : "#journey"; return <a className="quick-card" href={href} target={i === 0 ? undefined : "_blank"} rel={i === 0 ? undefined : "noreferrer"} key={item.title}><span className="quick-icon"><Icon size={21} /></span><span className="quick-text"><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight className="quick-arrow" size={17} /></a>; })}</div>
       </section>
+
+      {favoriteJourneys.length > 0 && <section className="quick-section favorites-section" id="favorites"><div className="section-heading"><div><span className="section-kicker">YOUR SHORTLIST</span><h2>Saved journeys.</h2></div><p>Stored on this device for quick access.</p></div><div className="favorite-grid">{favoriteJourneys.map(journey => <article className="favorite-card" key={journey.tripId}><div className="favorite-card-top"><span><Heart size={14} fill="currentColor"/> Saved route</span><button type="button" onClick={() => toggleFavorite(journey)} aria-label="Remove saved journey"><X size={15}/></button></div><strong>{journey.fromStop} <ArrowRight size={14}/> {journey.toStop}</strong><small>{journey.routeName} · {journey.departure} – {journey.arrival}</small><button className="favorite-use" type="button" onClick={() => useFavorite(journey)}>Use this journey <ArrowRight size={14}/></button></article>)}</div></section>}
 
       <section className="map-section" id="map">
         <div className="section-heading"><div><span className="section-kicker">EXPLORE THE REGION</span><h2>Andhra Pradesh, on the map.</h2></div><p>Choose a city to add it to your journey.</p></div>
