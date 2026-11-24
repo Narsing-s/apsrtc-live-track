@@ -5,7 +5,9 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 ## Current capabilities
 - Responsive passenger dashboard and journey planner interface.
 - Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.
-- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.\n- Direct journey timetable search from the APSRTC GTFS static feed (`stops.txt`, `routes.txt`, `trips.txt`, `stop_times.txt`, `calendar.txt`, and `calendar_dates.txt`) through `/api/journeys`.\n- Search results include scheduled departure/arrival, route, trip ID, and intermediate-stop count when present in the feed.
+- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.
+- Direct journey timetable search from the APSRTC GTFS static feed (`stops.txt`, `routes.txt`, `trips.txt`, `stop_times.txt`, `calendar.txt`, and `calendar_dates.txt`) through `/api/journeys`.
+- Search results include scheduled departure/arrival, route, trip ID, and intermediate-stop count when present in the feed.
 - Browser geolocation with explicit permission; reverse-geocoded current location and a blue location marker.
 - Nearby mapped bus stops discovered within 2 km using OpenStreetMap Overpass.
 - Nearby live-bus shortlist within 5 km, calculated from fresh community GTFS-Realtime vehicle positions.
