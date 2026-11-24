@@ -30,7 +30,7 @@ const quickLinks = [
   { icon: BusFront, title: "Find a bus", detail: "Explore available services" },
   { icon: MapPin, title: "Bus stops", detail: "Discover nearby stations" },
   { icon: Ticket, title: "Book tickets", detail: "Official APSRTC booking" },
-  { icon: Compass, title: "Track journey", detail: "Open official live tracker" }
+  { icon: Compass, title: "Live tracking", detail: "See reported GPS buses in app" }
 ];
 
 const officialLinks = [
@@ -230,8 +230,8 @@ export default function Home() {
         <div className="hero-copy">
           <div className="eyebrow"><span /> ANDHRA PRADESH • ONE JOURNEY AT A TIME</div>
           <h1>Every journey<br />has a <em>better way.</em></h1>
-          <p className="hero-lead">Your companion for bus travel across Andhra Pradesh. Find your route, explore services and stay connected to official bus updates.</p>
-          <div className="hero-proof"><span><ShieldCheck size={16} /> Official-source first</span><i /> <span><Navigation size={15} /> Built for every traveller</span></div>
+          <p className="hero-lead">Your companion for bus travel across Andhra Pradesh. Find scheduled services, discover nearby stops and follow a bus when a fresh GPS position is available.</p>
+          <div className="hero-proof"><span><ShieldCheck size={16} /> Clear data sources</span><i /> <span><Navigation size={15} /> Built for every traveller</span></div>
         </div>
         <div className="hero-art" aria-label="Illustration of a bus travelling through Andhra Pradesh landscape">
           <div className="sun-halo" /><div className="hill hill-back" /><div className="hill hill-front" />
@@ -268,7 +268,7 @@ export default function Home() {
 
       <section className="quick-section" id="discover">
         <div className="section-heading"><div><span className="section-kicker">YOUR TRAVEL TOOLKIT</span><h2>Everything starts here.</h2></div><p>Useful links and tools for a smoother trip.</p></div>
-        <div className="quick-grid">{quickLinks.map((item, i) => { const Icon = item.icon; const href = i === 2 ? "https://www.apsrtconline.in/" : i === 3 ? "https://www.apsrtclivetrack.com/" : i === 1 ? "https://www.google.com/maps/search/bus+stations+Andhra+Pradesh" : "#journey"; return <a className="quick-card" href={href} target={i === 0 ? undefined : "_blank"} rel={i === 0 ? undefined : "noreferrer"} key={item.title}><span className="quick-icon"><Icon size={21} /></span><span className="quick-text"><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight className="quick-arrow" size={17} /></a>; })}</div>
+        <div className="quick-grid">{quickLinks.map((item, i) => { const Icon = item.icon; const href = i === 2 ? "https://www.apsrtconline.in/" : i === 3 ? "#tracking" : i === 1 ? "#nearby" : "#journey"; return <a className="quick-card" href={href} target={i === 2 ? "_blank" : undefined} rel={i === 2 ? "noreferrer" : undefined} key={item.title}><span className="quick-icon"><Icon size={21} /></span><span className="quick-text"><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight className="quick-arrow" size={17} /></a>; })}</div>
       </section>
 
       {favoriteJourneys.length > 0 && <section className="quick-section favorites-section" id="favorites"><div className="section-heading"><div><span className="section-kicker">YOUR SHORTLIST</span><h2>Saved journeys.</h2></div><p>Stored on this device for quick access.</p></div><div className="favorite-grid">{favoriteJourneys.map(journey => <article className="favorite-card" key={journey.tripId}><div className="favorite-card-top"><span><Heart size={14} fill="currentColor"/> Saved route</span><button type="button" onClick={() => toggleFavorite(journey)} aria-label="Remove saved journey"><X size={15}/></button></div><strong>{journey.fromStop} <ArrowRight size={14}/> {journey.toStop}</strong><small>{journey.routeName} · {journey.departure} – {journey.arrival}</small><button className="favorite-use" type="button" onClick={() => useFavorite(journey)}>Use this journey <ArrowRight size={14}/></button></article>)}</div></section>}
