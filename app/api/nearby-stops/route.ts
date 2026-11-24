@@ -17,13 +17,16 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({ data: query }), cache: "no-store", signal: AbortSignal.timeout(18000)
     });
     if (!response.ok) throw new Error("Nearby stop service is temporarily unavailable.");
-    const data = await response.json();
-    const stops = (Array.isArray(data.elements) ? data.elements : []).map((item: Record<string, any>) => {
-      const tags = item.tags || {};
+    const data = await response.json() as { elements?: Array<{
+      id: number | string; tags?: Record<string, string>; lat?: number; lon?: number;
+      center?: { lat?: number; lon?: number };
+    }> };
+    const stops = (Array.isArray(data.elements) ? data.elements : []).map(item => {
+      const tags = item.tags ?? {};
       return { id: String(item.id), name: String(tags.name || tags["name:en"] || tags.ref || "Bus stop"),
         lat: Number(item.lat ?? item.center?.lat), lon: Number(item.lon ?? item.center?.lon),
         kind: tags.amenity === "bus_station" ? "Bus station" : "Bus stop" };
-    }).filter((s: {lat:number;lon:number}) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+    }).filter(stop => Number.isFinite(stop.lat) && Number.isFinite(stop.lon));
     return NextResponse.json({ stops }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } });
   } catch (error) {
     return NextResponse.json({ stops: [], warning: error instanceof Error ? error.message : "Nearby stops unavailable." }, { status: 200 });
