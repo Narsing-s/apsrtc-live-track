@@ -41,6 +41,12 @@ function FollowUser({ location }: { location: UserPosition | null }) {
   return null;
 }
 
+function FollowBus({ vehicle }: { vehicle: LiveVehicle | null }) {
+  const map = useMap();
+  useEffect(() => { if (vehicle) map.setView([vehicle.latitude, vehicle.longitude], 14, { animate: true }); }, [map, vehicle]);
+  return null;
+}
+
 const hubIcon = L.divIcon({
   className: "apsrtc-map-marker",
   html: '<span class="apsrtc-map-marker-core"></span>',
@@ -48,14 +54,15 @@ const hubIcon = L.divIcon({
   iconAnchor: [11, 11]
 });
 
-export default function AndhraMap({ onChoose, vehicles = [], userLocation = null, nearbyStops = [] }: { onChoose: (city: string) => void; vehicles?: LiveVehicle[]; userLocation?: UserPosition | null; nearbyStops?: NearbyStop[] }) {
+export default function AndhraMap({ onChoose, vehicles = [], userLocation = null, nearbyStops = [], selectedVehicle = null }: { onChoose: (city: string) => void; vehicles?: LiveVehicle[]; userLocation?: UserPosition | null; nearbyStops?: NearbyStop[]; selectedVehicle?: LiveVehicle | null }) {
   return (
     <MapContainer center={[16.2, 80.2]} zoom={6.3} minZoom={5} maxZoom={12} scrollWheelZoom={false} zoomControl={false} className="andhra-map">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <ZoomControl position="bottomright" />\n      <FollowUser location={userLocation} />\n      {userLocation && <Marker position={[userLocation.lat, userLocation.lon]} icon={userIcon}><Popup><strong>Your current location</strong></Popup></Marker>}\n      {nearbyStops.map(stop => <Marker key={stop.id} position={[stop.lat, stop.lon]} icon={stopIcon}><Popup><strong>{stop.name}</strong><span>{stop.kind} · OpenStreetMap mapped location</span></Popup></Marker>)}
+      <ZoomControl position="bottomright" />\n      <FollowUser location={userLocation} />
+      <FollowBus vehicle={selectedVehicle} />\n      {userLocation && <Marker position={[userLocation.lat, userLocation.lon]} icon={userIcon}><Popup><strong>Your current location</strong></Popup></Marker>}\n      {nearbyStops.map(stop => <Marker key={stop.id} position={[stop.lat, stop.lon]} icon={stopIcon}><Popup><strong>{stop.name}</strong><span>{stop.kind} · OpenStreetMap mapped location</span></Popup></Marker>)}
       {vehicles.map((vehicle) => (
         <Marker key={vehicle.id} position={[vehicle.latitude, vehicle.longitude]} icon={busIcon}>
           <Popup>
