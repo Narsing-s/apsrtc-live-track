@@ -85,7 +85,7 @@ export default function Home() {
       : [...current, journey].slice(-20));
   }
 
-  function useFavorite(journey: Journey) {
+  function handleUseFavorite(journey: Journey) {
     setFrom(journey.fromStop); setTo(journey.toStop);
     setFromCoordinates(null); setToCoordinates(null);
     setSearched(false);
@@ -271,7 +271,7 @@ export default function Home() {
         <div className="quick-grid">{quickLinks.map((item, i) => { const Icon = item.icon; const href = i === 2 ? "https://www.apsrtconline.in/" : i === 3 ? "#tracking" : i === 1 ? "#nearby" : "#journey"; return <a className="quick-card" href={href} target={i === 2 ? "_blank" : undefined} rel={i === 2 ? "noreferrer" : undefined} key={item.title}><span className="quick-icon"><Icon size={21} /></span><span className="quick-text"><strong>{item.title}</strong><small>{item.detail}</small></span><ArrowUpRight className="quick-arrow" size={17} /></a>; })}</div>
       </section>
 
-      {favoriteJourneys.length > 0 && <section className="quick-section favorites-section" id="favorites"><div className="section-heading"><div><span className="section-kicker">YOUR SHORTLIST</span><h2>Saved journeys.</h2></div><p>Stored on this device for quick access.</p></div><div className="favorite-grid">{favoriteJourneys.map(journey => <article className="favorite-card" key={journey.tripId}><div className="favorite-card-top"><span><Heart size={14} fill="currentColor"/> Saved route</span><button type="button" onClick={() => toggleFavorite(journey)} aria-label="Remove saved journey"><X size={15}/></button></div><strong>{journey.fromStop} <ArrowRight size={14}/> {journey.toStop}</strong><small>{journey.routeName} · {journey.departure} – {journey.arrival}</small><button className="favorite-use" type="button" onClick={() => useFavorite(journey)}>Use this journey <ArrowRight size={14}/></button></article>)}</div></section>}
+      {favoriteJourneys.length > 0 && <section className="quick-section favorites-section" id="favorites"><div className="section-heading"><div><span className="section-kicker">YOUR SHORTLIST</span><h2>Saved journeys.</h2></div><p>Stored on this device for quick access.</p></div><div className="favorite-grid">{favoriteJourneys.map(journey => <article className="favorite-card" key={journey.tripId}><div className="favorite-card-top"><span><Heart size={14} fill="currentColor"/> Saved route</span><button type="button" onClick={() => toggleFavorite(journey)} aria-label="Remove saved journey"><X size={15}/></button></div><strong>{journey.fromStop} <ArrowRight size={14}/> {journey.toStop}</strong><small>{journey.routeName} · {journey.departure} – {journey.arrival}</small><button className="favorite-use" type="button" onClick={() => handleUseFavorite(journey)}>Use this journey <ArrowRight size={14}/></button></article>)}</div></section>}
 
       <section className="map-section" id="map">
         <div className="section-heading"><div><span className="section-kicker">EXPLORE THE REGION</span><h2>Andhra Pradesh, on the map.</h2></div><p>Choose a city to add it to your journey.</p></div>
