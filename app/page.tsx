@@ -17,6 +17,7 @@ type LiveVehicle = {
 type PlaceResult = { id: string; name: string; displayName: string; lat: number; lon: number; type: string };
 type UserPosition = { lat: number; lon: number };
 type NearbyStop = { id: string; name: string; lat: number; lon: number; kind: string };
+type Journey = { tripId: string; routeId: string; routeName: string; routeDescription: string; fromStop: string; toStop: string; departure: string; arrival: string; durationMinutes: number; intermediateStops: number; headsign: string };
 type LiveFeed = {
   liveTracking: "live" | "stale" | "unavailable";
   message: string; updatedAt: string | null; ageSeconds: number | null;
@@ -51,6 +52,9 @@ export default function Home() {
   const [locationLabel, setLocationLabel] = useState("");
   const [nearbyStops, setNearbyStops] = useState<NearbyStop[]>([]);
   const [locationMessage, setLocationMessage] = useState("Location permission has not been requested.");
+  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [journeyMessage, setJourneyMessage] = useState("");
+  const [journeyLoading, setJourneyLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +77,73 @@ export default function Home() {
     return () => { active = false; window.clearInterval(timer); };
   }, []);
 
+
+  useEffect(() => {
+    const query = activeField === "from" ? from : activeField === "to" ? to : "";
+    if (query.trim().length < 2) { setSuggestions([]); return; }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/places?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal });
+        const data = await response.json();
+        setSuggestions(Array.isArray(data.results) ? data.results : []);
+      } catch { if (!controller.signal.aborted) setSuggestions([]); }
+    }, 400);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [from, to, activeField]);
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationMessage("Location is not supported by this browser."); return; }
+    navigator.geolocation.getCurrentPosition(async position => {
+      const point = { lat: position.coords.latitude, lon: position.coords.longitude };
+      setUserLocation(point);
+      try {
+        const [addressResponse, stopResponse] = await Promise.all([
+          fetch(`/api/places?lat=${point.lat}&lon=${point.lon}`),
+          fetch(`/api/nearby-stops?lat=${point.lat}&lon=${point.lon}`)
+        ]);
+        const address = await addressResponse.json(); const stops = await stopResponse.json();
+        const label = address.name || address.displayName?.split(",")[0] || "My location";
+        setLocationLabel(label); setFrom(current => current || label);
+        setNearbyStops(Array.isArray(stops.stops) ? stops.stops : []);
+        setLocationMessage("Your location is detected.");
+      } catch { setLocationMessage("Location detected; nearby places could not be loaded."); }
+    }, error => setLocationMessage(error.code === 1 ? "Location permission denied. You can still search manually." : "Could not detect location. Use the location button to retry."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  }, []);
+
+  function requestLocation() {
+    if (!navigator.geolocation) { setLocationMessage("Location is not supported by this browser."); return; }
+    setLocationMessage("Detecting your location…");
+    navigator.geolocation.getCurrentPosition(async position => {
+      const point = { lat: position.coords.latitude, lon: position.coords.longitude };
+      setUserLocation(point);
+      try {
+        const [addressResponse, stopResponse] = await Promise.all([
+          fetch(`/api/places?lat=${point.lat}&lon=${point.lon}`),
+          fetch(`/api/nearby-stops?lat=${point.lat}&lon=${point.lon}`)
+        ]);
+        const address = await addressResponse.json(); const stops = await stopResponse.json();
+        const label = address.name || address.displayName?.split(",")[0] || "My location";
+        setLocationLabel(label); setFrom(label);
+        setNearbyStops(Array.isArray(stops.stops) ? stops.stops : []);
+        setLocationMessage("Your location and nearby stops are loaded.");
+      } catch { setLocationMessage("Location detected, but nearby places are unavailable."); }
+    }, () => setLocationMessage("Location permission unavailable. Check browser settings."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  }
+
+  function chooseSuggestion(place: PlaceResult) {
+    if (activeField === "from") setFrom(place.name);
+    if (activeField === "to") setTo(place.name);
+    setSuggestions([]); setActiveField(null);
+  }
+
+  const nearbyLiveBuses = userLocation ? (liveData?.vehicles ?? []).map(bus => {
+    const rad = (value: number) => value * Math.PI / 180;
+    const dLat = rad(bus.latitude-userLocation.lat), dLon = rad(bus.longitude-userLocation.lon);
+    const a = Math.sin(dLat/2)**2 + Math.cos(rad(userLocation.lat))*Math.cos(rad(bus.latitude))*Math.sin(dLon/2)**2;
+    return { ...bus, distanceKm: 6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)) };
+  }).filter(bus => bus.distanceKm <= 5).sort((a,b) => a.distanceKm-b.distanceKm) : [];
+
   function chooseMapCity(city: string) {
     if (mapChoice === "from") { setFrom(city); setMapChoice("to"); }
     else { setTo(city); setMapChoice("from"); }
@@ -84,9 +155,16 @@ export default function Home() {
     setTo(from);
   }
 
-  function submitSearch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSearched(true);
+  async function submitSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setSearched(true); setJourneyLoading(true); setJourneyMessage(""); setJourneys([]);
+    try {
+      const response = await fetch(`/api/journeys?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${date}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Journey search failed.");
+      setJourneys(Array.isArray(data.journeys) ? data.journeys : []);
+      setJourneyMessage(data.message || "Search complete.");
+    } catch (error) { setJourneyMessage(error instanceof Error ? error.message : "Journey search failed."); }
+    finally { setJourneyLoading(false); }
   }
 
   return (
@@ -133,7 +211,16 @@ export default function Home() {
           <label className="date-field"><span>JOURNEY DATE</span><div><CalendarDays size={18} /><input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={e => setDate(e.target.value)} required /></div></label>
           <button className="search-button" type="submit"><Search size={18} /> Find buses <ArrowRight size={16} /></button>
         </form>
-        {searched && <div className="search-feedback"><div className="feedback-icon"><Clock3 size={19} /></div><div><strong>Schedule connection coming next</strong><p>We received your search for {from} to {to} on {date}. Verified APSRTC timetable data is not connected yet, so we won&apos;t show unverified services or timings.</p><a href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer">Check official availability <ArrowUpRight size={14} /></a></div></div>}
+        {searched && <div className="search-feedback" style={{display:"block",marginTop:18}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}><div className="feedback-icon"><Clock3 size={19}/></div><div><strong>{journeyLoading ? "Searching published timetable…" : journeys.length ? `${journeys.length} scheduled direct services found` : "Journey search results"}</strong><p>{journeyMessage}</p></div></div>
+          {journeys.length > 0 && <div style={{display:"grid",gap:10,marginTop:14}}>{journeys.map((journey,index)=><article key={journey.tripId+"-"+index} style={{background:"#fff",border:"1px solid #e4ebe4",borderRadius:12,padding:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><strong>{journey.routeName}</strong><span style={{fontSize:12,color:"#637363"}}>{journey.durationMinutes ? `${Math.floor(journey.durationMinutes/60)}h ${journey.durationMinutes%60}m` : "Duration unavailable"}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:10}}><div><strong>{journey.departure}</strong><small style={{display:"block"}}>{journey.fromStop}</small></div><div style={{textAlign:"right"}}><strong>{journey.arrival}</strong><small style={{display:"block"}}>{journey.toStop}</small></div></div>
+            <small style={{display:"block",marginTop:8,color:"#68786a"}}>{journey.intermediateStops} intermediate stops · Scheduled trip · {journey.tripId}</small>
+            <a href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:9}}>Check booking on APSRTC <ArrowUpRight size={13}/></a>
+          </article>)}</div>}
+          <p style={{fontSize:11,marginTop:12,color:"#718071"}}>Unofficial community GTFS timetable. This is not live seat availability or an APSRTC booking confirmation. Verify with APSRTC before travel.</p>
+        </div>}
         <div className="popular-row"><span>POPULAR DESTINATIONS</span>{["Vijayawada", "Visakhapatnam", "Tirupati", "Guntur", "Kurnool"].map(city => <button key={city} onClick={() => { setTo(city); setSearched(false); }}>{city}</button>)}</div>
       </section>
 
