@@ -58,6 +58,7 @@ export default function Home() {
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [journeyMessage, setJourneyMessage] = useState("");
   const [journeyLoading, setJourneyLoading] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<LiveVehicle | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -225,6 +226,7 @@ export default function Home() {
             <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}><strong>{journey.routeName}</strong><span style={{fontSize:12,color:"#637363"}}>{journey.durationMinutes ? `${Math.floor(journey.durationMinutes/60)}h ${journey.durationMinutes%60}m` : "Duration unavailable"}</span></div>
             <div style={{display:"flex",justifyContent:"space-between",gap:12,marginTop:10}}><div><strong>{journey.departure}</strong><small style={{display:"block"}}>{journey.fromStop}</small></div><div style={{textAlign:"right"}}><strong>{journey.arrival}</strong><small style={{display:"block"}}>{journey.toStop}</small></div></div>
             <small style={{display:"block",marginTop:8,color:"#68786a"}}>{journey.intermediateStops} intermediate stops · Scheduled trip · {journey.tripId}</small>
+            {(() => { const exact = (liveData?.vehicles ?? []).find(bus => bus.tripId === journey.tripId); const routeMatches = (liveData?.vehicles ?? []).filter(bus => bus.routeId === journey.routeId); const matched = exact ?? (routeMatches.length === 1 ? routeMatches[0] : null); return matched ? <button type="button" onClick={() => { setSelectedVehicle(matched); document.getElementById("tracking")?.scrollIntoView({behavior:"smooth"}); }} style={{display:"inline-flex",alignItems:"center",gap:7,marginTop:10,padding:"9px 12px",border:0,borderRadius:8,background:"#eaf6ee",color:"#216b42",fontWeight:700,cursor:"pointer"}}><Navigation size={15}/> Track this bus · GPS available</button> : <small style={{display:"block",marginTop:9,color:"#8a7045"}}>No fresh GPS vehicle matched to this scheduled service right now.</small>; })()}
             <a href="https://www.apsrtconline.in/" target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:9}}>Check booking on APSRTC <ArrowUpRight size={13}/></a>
           </article>)}</div>}
           <p style={{fontSize:11,marginTop:12,color:"#718071"}}>Unofficial community GTFS timetable. This is not live seat availability or an APSRTC booking confirmation. Verify with APSRTC before travel.</p>
@@ -265,6 +267,7 @@ export default function Home() {
           </div>
           <div className="tracking-card-foot"><span>Source</span><strong>{liveData?.sourceLabel ?? "Checking community mirror"}</strong></div>
           <div className="tracking-card-foot" style={{marginTop:10}}><span>Last source update</span><strong>{liveData?.updatedAt ? new Date(liveData.updatedAt).toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "Not available"}</strong></div>
+          {selectedVehicle && <div style={{marginTop:16,padding:14,borderRadius:12,border:"1px solid #dce9df",background:"#f7fbf7"}}><div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}><strong>Selected bus · {selectedVehicle.label}</strong><button type="button" onClick={() => setSelectedVehicle(null)} style={{border:0,background:"transparent",cursor:"pointer",color:"#637363"}} aria-label="Close selected bus">✕</button></div><p style={{fontSize:12,margin:"8px 0",color:"#526454"}}>Route {selectedVehicle.routeId ?? "not provided"} · {selectedVehicle.speedKph === null ? "Speed unavailable" : `${selectedVehicle.speedKph} km/h`}</p><p style={{fontSize:12,margin:"6px 0",color:"#526454"}}>Latest reported position: {selectedVehicle.latitude.toFixed(5)}, {selectedVehicle.longitude.toFixed(5)}</p><p style={{fontSize:11,margin:"6px 0",color:"#7b887c"}}>GPS time: {selectedVehicle.timestamp ? new Date(selectedVehicle.timestamp).toLocaleString("en-IN") : "Not provided"}. The map below shows reported coordinates; this is not a guaranteed continuous GPS connection.</p><a href={`https://www.google.com/maps?q=${selectedVehicle.latitude},${selectedVehicle.longitude}`} target="_blank" rel="noreferrer" style={{display:"inline-flex",marginTop:8}}>Open bus location in Maps <ArrowUpRight size={13}/></a></div>}
           <p style={{fontSize:9,lineHeight:1.5,color:"#8b968c",margin:"12px 0 0"}}>Unofficial community source · Not endorsed by APSRTC · {liveData?.attribution ?? "Source attribution pending"}</p>
         </div>
       </section>
