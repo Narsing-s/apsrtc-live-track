@@ -4,7 +4,12 @@ A modern passenger-first web application for planning journeys across Andhra Pra
 
 ## Current capabilities
 - Responsive passenger dashboard and journey planner interface.
-- Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.\n- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.\n- Browser geolocation with explicit permission; reverse-geocoded current location and a blue location marker.\n- Nearby mapped bus stops discovered within 2 km using OpenStreetMap Overpass.\n- Nearby live-bus shortlist within 5 km, calculated from fresh community GTFS-Realtime vehicle positions.\n- One-tap external traffic map link; live traffic congestion is not sourced or represented as an in-app live feed.
+- Interactive OpenStreetMap explorer with 12 Andhra Pradesh city-centre reference points; select a city marker to fill the trip planner.
+- Debounced city/place autocomplete for origin and destination using OpenStreetMap Nominatim.
+- Browser geolocation with explicit permission; reverse-geocoded current location and a blue location marker.
+- Nearby mapped bus stops discovered within 2 km using OpenStreetMap Overpass.
+- Nearby live-bus shortlist within 5 km, calculated from fresh community GTFS-Realtime vehicle positions.
+- One-tap external traffic map link; live traffic congestion is not sourced or represented as an in-app live feed.
 - Map attribution to OpenStreetMap contributors; city reference markers are not represented as APSRTC depots or bus stops.
 - Official-source links for ticket booking and APSRTC live tracking.
 - Official APSRTC Live Track and ticket-booking links.
